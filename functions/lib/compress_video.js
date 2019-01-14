@@ -15,6 +15,7 @@ const functions = require('firebase-functions');
 let ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
 const allowedExtensions = [".mp4"];
+const allowedCodecs = ["264", "265"];
 
 //Check if has a bin ffmpeg
 if (!fs.existsSync(ffmpegPath)) {
@@ -36,7 +37,7 @@ console.info(`Ffmpeg: ${ffmpegPath}`);
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-module.exports = async ({media_bucket, media_path, media_file, codec = "264", resolution = "640x?", url_limit = 48}, {uid}) => {
+module.exports = async ({media_bucket, media_path, media_file, codec = "264", resolution = "640x?", url_limit = 48, delete_original = true}, {uid}) => {
 
     if (!uid) {
         throw new functions.https.HttpsError('invalid-argument', "Authentication is missing!");
@@ -59,6 +60,11 @@ module.exports = async ({media_bucket, media_path, media_file, codec = "264", re
         throw new functions.https.HttpsError('invalid-argument', "Invalid file type!", {
             expected: allowedExtensions,
             received: path.extname(fileMetadata.name),
+        });
+    } else if (allowedCodecs.indexOf(`${codec}`) < 0) {
+        throw new functions.https.HttpsError('invalid-argument', "Invalid codec!", {
+            expected: allowedCodecs,
+            received: `${codec}`,
         });
     }
 
@@ -109,7 +115,9 @@ module.exports = async ({media_bucket, media_path, media_file, codec = "264", re
                             expires: Date.now() + 1000 * 60 * 60 * url_limit, // one hour
                         };
 
-                        originalFile.delete();
+                        if (delete_original) {
+                            originalFile.delete();
+                        }
 
                         resolve({
                             url: await newFile.getSignedUrl(urlOptions)

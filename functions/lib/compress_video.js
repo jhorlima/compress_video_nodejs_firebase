@@ -37,7 +37,7 @@ console.info(`Ffmpeg: ${ffmpegPath}`);
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-module.exports = async ({media_bucket, media_path, media_file, codec = "264", resolution = "640x?", url_limit = 48, delete_original = true}, {uid}) => {
+module.exports = async ({media_bucket, media_path, media_file, resolution = "640x?", url_limit = 48, delete_original = true}, {uid}) => {
 
     if (!uid) {
         throw new functions.https.HttpsError('invalid-argument', "Authentication is missing!");
@@ -61,12 +61,16 @@ module.exports = async ({media_bucket, media_path, media_file, codec = "264", re
             expected: allowedExtensions,
             received: path.extname(fileMetadata.name),
         });
-    } else if (allowedCodecs.indexOf(`${codec}`) < 0) {
-        throw new functions.https.HttpsError('invalid-argument', "Invalid codec!", {
-            expected: allowedCodecs,
-            received: `${codec}`,
-        });
     }
+
+    // else if (allowedCodecs.indexOf(`${codec}`) < 0) {
+    //     throw new functions.https.HttpsError('invalid-argument', "Invalid codec!", {
+    //         expected: allowedCodecs,
+    //         received: `${codec}`,
+    //     });
+    // }
+
+    const codec = "265";
 
     const tempPath = os.tmpdir();
 
@@ -90,6 +94,7 @@ module.exports = async ({media_bucket, media_path, media_file, codec = "264", re
             ffmpeg(tempOriginalFilePath)
                 .videoCodec(`libx${codec}`)
                 .size(resolution)
+                .outputOptions(['-vtag hvc1'])
                 .on('end', async () => {
 
                     console.log('Finished processing');

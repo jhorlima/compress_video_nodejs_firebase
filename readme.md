@@ -74,8 +74,7 @@ Se houver outros campos presentes na solicitação além de data, o back-end con
 ```js
 {
     "data": {
-        ...
-        "codec": "264", // 264 ou 265 . Padrão 264, equivalente ao H.264
+        ///...
         "resolution": "640x?", //Resolução de saída do novo arquivo. Padrão 640x altura proporcional.
         "url_limit": 48, // Limite em horas da url de download do novo arquivo. Padrão 48 horas.
         "delete_original": true //Apagar o arquivo original após o processo ocorrer com sucesso. Padrão true.

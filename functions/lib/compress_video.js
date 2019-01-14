@@ -13,6 +13,8 @@ const ffmpeg = require('fluent-ffmpeg');
 
 let ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
+const allowedExtensions = [".mp4"];
+
 //Check if has a bin ffmpeg
 if (!fs.existsSync(ffmpegPath)) {
 
@@ -50,6 +52,10 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
 
     const [fileMetadata] = await originalFile.getMetadata();
 
+    if(allowedExtensions.indexOf(path.extname(fileMetadata.name)) < 0) {
+        throw Error("Invalid file type!");
+    }
+
     const tempPath = os.tmpdir();
 
     //Create a new file name
@@ -57,8 +63,10 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
     //Create a new temp path to original file
     const tempOriginalFilePath = path.join(tempPath, originalFileName);
 
+    const codec = "264";
+
     //Create a new file name
-    const tempFileName = `sd_${originalFileName}`;
+    const tempFileName = `h.${codec}_${originalFileName}`;
     //Create a new temp path to new file
     const tempNewFilePath = path.join(tempPath, path.basename(tempFileName));
 
@@ -70,7 +78,7 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
         try {
 
             ffmpeg(tempOriginalFilePath)
-                .videoCodec('libx265')
+                .videoCodec(`libx${codec}`)
                 .size('640x?')
                 .on('end', async () => {
 
@@ -85,7 +93,7 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
                                 // Use only if the contents of the file will never change
                                 // (If the contents will change, use cacheControl: 'no-cache')
                                 cacheControl: 'public, max-age=31536000',
-                                contentType: fileMetadata.contentType,
+                                contentType: 'video/mp4',
                             },
                         });
 

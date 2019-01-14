@@ -58,7 +58,7 @@ O corpo da solicitação HTTP deve ser um objeto JSON com qualquer um dos seguin
 -   Obrigatório:  `data`  - o argumento passado para a função. Pode ser qualquer valor JSON válido. É automaticamente decodificado em tipos JavaScript nativos de acordo com o formato de serialização descrito abaixo.
 
 - Dados obrigatórios, referente ao caminho original do arquivo de vídeo na Cloud Functions:
-```json
+```js
 {
     "data": {
         "media_bucket": "vitaltests-1c0bd.appspot.com",
@@ -71,7 +71,7 @@ O corpo da solicitação HTTP deve ser um objeto JSON com qualquer um dos seguin
 Se houver outros campos presentes na solicitação além de data, o back-end considerará a solicitação malformada e ela será rejeitada.
 
 - Campos opcionais
-```json
+```js
 {
     "data": {
         ...
@@ -163,7 +163,7 @@ A resposta de um ponto de extremidade do cliente é sempre um objeto JSON. No m�
 
 
 - Resposta: 
-```json
+```js
 {
     "result": {
         "url": [

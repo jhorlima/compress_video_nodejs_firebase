@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const admin = require('firebase-admin');
 const ffmpeg = require('fluent-ffmpeg');
+const functions = require('firebase-functions');
 
 let ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
@@ -35,10 +36,12 @@ console.info(`Ffmpeg: ${ffmpegPath}`);
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
+module.exports = async ({media_bucket, media_path, media_file, codec = "264", resolution = "640x?", url_limit = 48}, {uid}) => {
 
-    if(!media_bucket || !media_path || !media_file || !uid){
-        throw Error("Sent data is invalid or authentication is missing!");
+    if (!uid) {
+        throw new functions.https.HttpsError('invalid-argument', "Authentication is missing!");
+    } else if (!media_bucket || !media_path || !media_file) {
+        throw new functions.https.HttpsError('invalid-argument', "Sent data is invalid!");
     }
 
     //Get bucket object
@@ -46,14 +49,17 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
     //Get file object from bucket
     const originalFile = originalBucket.file(`${media_path}/${media_file}`);
 
-    if(!await originalFile.exists()){
-        throw Error("No valid files were found!");
+    if (!await originalFile.exists()) {
+        throw new functions.https.HttpsError('not-found', "No valid files were found!");
     }
 
     const [fileMetadata] = await originalFile.getMetadata();
 
-    if(allowedExtensions.indexOf(path.extname(fileMetadata.name)) < 0) {
-        throw Error("Invalid file type!");
+    if (allowedExtensions.indexOf(path.extname(fileMetadata.name)) < 0) {
+        throw new functions.https.HttpsError('invalid-argument', "Invalid file type!", {
+            expected: allowedExtensions,
+            received: path.extname(fileMetadata.name),
+        });
     }
 
     const tempPath = os.tmpdir();
@@ -62,8 +68,6 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
     const originalFileName = path.basename(originalFile.name);
     //Create a new temp path to original file
     const tempOriginalFilePath = path.join(tempPath, originalFileName);
-
-    const codec = "264";
 
     //Create a new file name
     const tempFileName = `h.${codec}_${originalFileName}`;
@@ -79,7 +83,7 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
 
             ffmpeg(tempOriginalFilePath)
                 .videoCodec(`libx${codec}`)
-                .size('640x?')
+                .size(resolution)
                 .on('end', async () => {
 
                     console.log('Finished processing');
@@ -102,7 +106,7 @@ module.exports = async ({media_bucket, media_path, media_file}, {uid}) => {
 
                         const urlOptions = {
                             action: 'read',
-                            expires: Date.now() + 1000 * 60 * 60 * 48, // one hour
+                            expires: Date.now() + 1000 * 60 * 60 * url_limit, // one hour
                         };
 
                         originalFile.delete();

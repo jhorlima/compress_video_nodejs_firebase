@@ -22,8 +22,6 @@ exports.compressVideo = functions.https.onCall(async (data, context) => {
     try {
         return await compressVideo(data, context.auth);
     } catch (err) {
-        return {
-            error: err.message
-        }
+        throw err instanceof functions.https.HttpsError ? err : new functions.https.HttpsError('unknown', err.message, err);
     }
 });

@@ -5,6 +5,7 @@ Faça compressão de vídeos armazenados no Cloud Storage da Firebase através d
 
 Requisitos Mínimos:
 
+  - Git
   - Firebase Tools
   - NodeJS 8
   - 512MB de Ram
@@ -15,7 +16,7 @@ Requisitos Mínimos:
 Após instalar e configurar o Firebase Tools (O seu usuário do Google também), faça o clone deste projeto:  
 
 ```sh
-https://github.com/jhorlima/compress_video_nodejs_firebase
+git clone https://github.com/jhorlima/compress_video_nodejs_firebase.git
 ```
 
 Depois configure esse diretório a um projeto da Firebase:
